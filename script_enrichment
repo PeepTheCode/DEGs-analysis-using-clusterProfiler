@@ -1,0 +1,95 @@
+# Load libraries
+library(clusterProfiler)
+library(org.Mm.eg.db)  # <- mouse annotation
+library(enrichplot)
+library(tidyverse)
+
+# Convert to data.frame first
+upregulated_df <- as.data.frame(upregulated)         #Assuming that 'upregulated' contains your filtered upregulated genes
+downregulated_df <- as.data.frame(downregulated)    #Assuming that 'downregulated' contains your filtered downregulated genes
+
+# Add SYMBOL column (rownames)
+upregulated_df$SYMBOL <- rownames(upregulated_df)
+downregulated_df$SYMBOL <- rownames(downregulated_df)
+
+# Map to ENTREZ
+up_annot <- bitr(upregulated_df$SYMBOL, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Mm.eg.db)
+down_annot <- bitr(downregulated_df$SYMBOL, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Mm.eg.db)
+
+# Join to original df
+upregulated_merged <- inner_join(upregulated_df, up_annot, by = "SYMBOL")
+downregulated_merged <- inner_join(downregulated_df, down_annot, by = "SYMBOL")
+
+upregulated_merged
+upregulated_merged
+
+saveRDS(upregulated_merged, file="upreg_merged.rds")
+saveRDS(downregulated_merged, file="downreg_merged.rds")
+
+##### GO Enrichment - Biological Process (BP)  #####
+go_up <- enrichGO(
+  gene = upregulated_merged$ENTREZID,
+  OrgDb = org.Mm.eg.db,
+  ont = "BP",
+  pAdjustMethod = "BH",
+  qvalueCutoff = 0.05,
+  readable = TRUE
+)
+
+go_down <- enrichGO(
+  gene = downregulated_merged$ENTREZID,
+  OrgDb = org.Mm.eg.db,
+  ont = "BP",
+  pAdjustMethod = "BH",
+  qvalueCutoff = 0.05,
+  readable = TRUE
+)
+
+#Filter and save the significantly enriched GO Biological Processes (BP) - for upregulated genes
+go_up@result[go_up@result$p.adjust<0.0001,]%>%arrange(desc(Count))%>%
+write.csv("GO_BP_up.csv",row.names=F)
+
+#Filter and save the significantly enriched GO Biological Processes (BP) - for downregulated genes
+go_down@result[go_up@result$p.adjust<0.0001,]%>%arrange(desc(Count))%>%
+write.csv("GO_BP_down.csv",row.names=F)
+
+library(enrichplot)
+
+# GO dotplots
+dotplot(go_up, title = "GO Biological Process - Upregulated Genes")
+dotplot(go_down, title = "GO Biological Process - Downregulated Genes")
+
+
+##### KEGG Enrichment ######
+
+#NOTE: #enrichKEGG() requires internet access. Following part was run in headnode by saving RDS file of 'upregulated_merged' and 'downregulated_merged', as my HPC compute node has no internet access.
+# RDS was saved at previously and then executed in Headnode where internet is available.
+
+kegg_up <- enrichKEGG(
+  gene = upregulated_merged$ENTREZID,
+  organism = "mmu", # Mouse
+  pAdjustMethod = "BH",
+  qvalueCutoff = 0.05
+)
+
+kegg_down <- enrichKEGG(
+  gene = downregulated_merged$ENTREZID,
+  organism = "mmu",
+  pAdjustMethod = "BH",
+  qvalueCutoff = 0.05
+)
+
+# Following part was processed in HPC compute node
+#Read RDS
+kegg_up <- readRDS("kegg_up.rds")
+kegg_down <- readRDS("kegg_down.rds")
+
+# KEGG dotplots
+dotplot(kegg_up, title = "KEGG Pathways - Upregulated Genes")
+dotplot(kegg_down, title = "KEGG Pathways - Downregulated Genes")
+
+#If any dotplot is returning NULL (As KEGG down returned NULL error in my case) 
+# And upon checking the followingif you find it empty - meaning no significant enrichment
+#head(as.data.frame(kegg_down))
+#nrow(as.data.frame(kegg_down))
+
