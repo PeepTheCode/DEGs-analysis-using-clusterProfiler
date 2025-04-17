@@ -53,12 +53,11 @@ write.csv("GO_BP_up.csv",row.names=F)
 go_down@result[go_up@result$p.adjust<0.0001,]%>%arrange(desc(Count))%>%
 write.csv("GO_BP_down.csv",row.names=F)
 
+# GO dotplots
 library(enrichplot)
 
-# GO dotplots
-dotplot(go_up, title = "GO Biological Process - Upregulated Genes")
-dotplot(go_down, title = "GO Biological Process - Downregulated Genes")
-
+dotplot(go_up, showCategory = 20, title = "GO Biological Process - Upregulated Genes")
+dotplot(go_down, showCategory = 20, title = "GO Biological Process - Downregulated Genes")
 
 ##### KEGG Enrichment ######
 
