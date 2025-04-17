@@ -120,3 +120,6 @@ reactome_down <- enrichPathway(
 dotplot(reactome_up, showCategory = 15, title = "Reactome (Upregulated)")
 dotplot(reactome_down, showCategory = 15, title = "Reactome (Downregulated)") #In case no Significant, throws NULL error
 
+
+####### GSEA #######
+
