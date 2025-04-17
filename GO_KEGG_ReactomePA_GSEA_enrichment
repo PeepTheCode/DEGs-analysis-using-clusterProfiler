@@ -56,8 +56,17 @@ write.csv("GO_BP_down.csv",row.names=F)
 # GO dotplots
 library(enrichplot)
 
+#Default sort
 dotplot(go_up, showCategory = 20, title = "GO Biological Process - Upregulated Genes")
 dotplot(go_down, showCategory = 20, title = "GO Biological Process - Downregulated Genes")
+
+# Sort by Gene Ratio
+dotplot(go_up, showCategory = 20, orderBy = "GeneRatio") +
+  ggtitle("Top 20 GO Terms by Gene Ratio")
+
+dotplot(go_down, showCategory = 20, orderBy = "GeneRatio") +
+  ggtitle("Top 20 GO Terms by Gene Ratio")
+
 
 ##### KEGG Enrichment ######
 
